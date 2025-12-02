@@ -1,4 +1,4 @@
-#EXPORT ALL FILES FROM A XATA LITE DATABASE
+EXPORT ALL FILES FROM A XATA LITE DATABASE
 
 In order to export all files from a Xata Lite database, please clone this repo and follow the steps below.
 
@@ -28,16 +28,21 @@ pg_dump \
 You have a single workspace, using it by default: Example-workspace-xxxxxx
 # [Xata] Configuration used by the CLI and the SDK
 ✔ Select a database or create a new one › pg-enabled-database
-✔ Create .gitignore and ignore .env? … yes
 ✔ Generate code and types from your Xata database › JavaScript import syntax
 ✔ Choose the output path for the generated code … src/xata.js
 ✔ Do you want to generate the TypeScript declarations? … yes
 ✔ How should we install the @xata.io/client package? › npm
 ```
 
-3. Add your Xata Lite database URL to the `.env` file as `XATA_DATABASE_URL` .
+4. In your cloned directory, run:
 
-4. Download the files using the appropriate script:
+```bash
+npm install
+```
+
+5. Add your Xata Lite database URL to the `.env` file as `XATA_DATABASE_URL`. Remove the branch name from the URL (for example, ":main").
+
+4. Download files from the database using the appropriate script:
 
 ```bash
 node download-files-from-pg-enabled-db.mjs
