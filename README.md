@@ -34,15 +34,9 @@ You have a single workspace, using it by default: Example-workspace-xxxxxx
 ✔ How should we install the @xata.io/client package? › npm
 ```
 
-3. In your cloned directory, run:
+3. Add your Xata Lite database URL to the `.env` file as `XATA_DATABASE_URL`.
 
-```bash
-npm install
-```
-
-4. Add your Xata Lite database URL to the `.env` file as `XATA_DATABASE_URL`. Remove the branch name from the URL (for example, ":main").
-
-5. Download files from the database using the appropriate script:
+4. Download files from the database using the appropriate script by running:
 
 ```bash
 node download-files-from-pg-enabled-db.mjs
