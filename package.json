@@ -1,0 +1,21 @@
+{
+  "name": "export-files-pg-enabled",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@xata.io/client": "^0.0.0-next.v93343b9646f57a1e5c51c35eccf0767c2bb80baa",
+    "dotenv": "^17.2.3",
+    "fs": "^0.0.1-security",
+    "node-fetch": "^3.3.2",
+    "p-limit": "^7.2.0",
+    "path": "^0.12.7"
+  }
+}

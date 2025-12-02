@@ -1,0 +1,6 @@
+.env
+.xata/
+.xatarc
+src/
+file-downloads
+xata-schema.sql
