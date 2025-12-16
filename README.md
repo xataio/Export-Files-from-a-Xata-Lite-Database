@@ -41,7 +41,9 @@ You have a single workspace, using it by default: Example-workspace-xxxxxx
 ```bash
 node download-files-from-pg-enabled-db.mjs
 ```
+
 or, if your database is not enabled for Postgres direct access:
+
 ```bash
 node download-files-from-non-pg-enabled-db.mjs
 ```

@@ -1,18 +1,18 @@
-import { getXataClient } from './src/xata.js';
-import 'dotenv/config';
-import fs from 'fs';
-import path from 'path';
-import fetch from 'node-fetch';
-import pLimit from 'p-limit';
+import { getXataClient } from "./src/xata.js";
+import "dotenv/config";
+import fs from "fs";
+import path from "path";
+import fetch from "node-fetch";
+import pLimit from "p-limit";
 
 const xata = getXataClient();
 
 const API_KEY = process.env.XATA_API_KEY;
 const DATABASE_URL = process.env.XATA_DATABASE_URL;
-const BRANCH = process.env.XATA_BRANCH || 'main';
+const BRANCH = process.env.XATA_BRANCH || "main";
 
 if (!API_KEY || !DATABASE_URL) {
-  console.error('❌ Missing XATA_API_KEY or XATA_DATABASE_URL in .env');
+  console.error("❌ Missing XATA_API_KEY or XATA_DATABASE_URL in .env");
   process.exit(1);
 }
 
@@ -20,31 +20,37 @@ if (!API_KEY || !DATABASE_URL) {
  * Fetch all tables and detect which ones contain file-type columns.
  */
 async function getAllTablesWithFiles() {
-  console.log('📡 Fetching full database schema...');
+  console.log("📡 Fetching full database schema...");
 
-  const baseUrl = DATABASE_URL.includes(':') ? DATABASE_URL : `${DATABASE_URL}:${BRANCH}`;
+  const baseUrl = DATABASE_URL.includes(":")
+    ? DATABASE_URL
+    : `${DATABASE_URL}:${BRANCH}`;
 
   const res = await fetch(baseUrl, {
     headers: {
       Authorization: `Bearer ${API_KEY}`,
-      Accept: 'application/json'
-    }
+      Accept: "application/json",
+    },
   });
 
   if (!res.ok) {
-    throw new Error(`❌ Failed to fetch database schema: ${res.status} ${res.statusText} (${baseUrl})`);
+    throw new Error(
+      `❌ Failed to fetch database schema: ${res.status} ${res.statusText} (${baseUrl})`
+    );
   }
 
   const data = await res.json();
 
   if (!data?.schema?.tables) {
-    throw new Error('❌ Schema format not recognized — missing "schema.tables"');
+    throw new Error(
+      '❌ Schema format not recognized — missing "schema.tables"'
+    );
   }
 
   const result = {};
   for (const table of data.schema.tables) {
     const fileColumns = (table.columns || [])
-      .filter((col) => col.type === 'file' || col.type === 'file[]')
+      .filter((col) => col.type === "file" || col.type === "file[]")
       .map((col) => col.name);
 
     if (fileColumns.length > 0) {
@@ -55,7 +61,7 @@ async function getAllTablesWithFiles() {
   const tableCount = Object.keys(result).length;
   console.log(`📊 Found ${tableCount} tables with file columns.`);
   for (const [table, cols] of Object.entries(result)) {
-    console.log(`  - ${table}: ${cols.join(', ')}`);
+    console.log(`  - ${table}: ${cols.join(", ")}`);
   }
 
   return result;
@@ -78,7 +84,9 @@ async function downloadFilesFromTable(tableName, fileColumns, concurrency = 5) {
   const baseDir = path.resolve(`./file-downloads/${tableName}`);
   fs.mkdirSync(baseDir, { recursive: true });
 
-  const existingFiles = fs.readdirSync(baseDir).filter((f) => f !== '.DS_Store');
+  const existingFiles = fs
+    .readdirSync(baseDir)
+    .filter((f) => f !== ".DS_Store");
   if (existingFiles.length > 0) {
     console.log(
       `⏭ Table "${tableName}" already has downloaded files (${existingFiles.length}). Skipping entire table.`
@@ -86,7 +94,10 @@ async function downloadFilesFromTable(tableName, fileColumns, concurrency = 5) {
     return;
   }
 
-  const columns = fileColumns.flatMap((col) => [`${col}.name`, `${col}.signedUrl`]);
+  const columns = fileColumns.flatMap((col) => [
+    `${col}.name`,
+    `${col}.signedUrl`,
+  ]);
 
   let fileCount = 0;
   let skippedCount = 0;
@@ -107,8 +118,6 @@ async function downloadFilesFromTable(tableName, fileColumns, concurrency = 5) {
 
   /** Download a single file safely */
   async function downloadFile(file, recordId, colName) {
-    if (!file?.name) return false;
-
     const ext = path.extname(file.name);
     const base = path.basename(file.name, ext);
     const newName = `${base}__${recordId}${ext}`;
@@ -130,8 +139,8 @@ async function downloadFilesFromTable(tableName, fileColumns, concurrency = 5) {
           await new Promise((resolve, reject) => {
             const stream = fs.createWriteStream(filePath);
             res.body.pipe(stream);
-            res.body.on('error', reject);
-            stream.on('finish', resolve);
+            res.body.on("error", reject);
+            stream.on("finish", resolve);
           });
           console.log(`✅ Saved (signedUrl): ${label}`);
           fileCount++;
@@ -145,20 +154,28 @@ async function downloadFilesFromTable(tableName, fileColumns, concurrency = 5) {
     // Fallback: signedUrl fetch via REST/curl if signedUrl is null in record
     if (!file.signedUrl) {
       try {
-        const res = await fetch(`${DATABASE_URL}/tables/${tableName}/data/${recordId}?columns=${colName}.signedUrl`, {
-          headers: { Authorization: `Bearer ${API_KEY}` }
-        });
+        const res = await fetch(
+          `${DATABASE_URL}/tables/${tableName}/data/${recordId}?columns=${colName}.signedUrl`,
+          {
+            headers: { Authorization: `Bearer ${API_KEY}` },
+          }
+        );
         if (res.ok) {
           const json = await res.json();
-          const fetchedFile = Array.isArray(json[colName]) ? json[colName][0] : json[colName];
+          const fetchedFile = Array.isArray(json[colName])
+            ? json[colName][0]
+            : json[colName];
           if (fetchedFile?.signedUrl) {
-            const signedRes = await retry(() => fetch(fetchedFile.signedUrl), label);
+            const signedRes = await retry(
+              () => fetch(fetchedFile.signedUrl),
+              label
+            );
             if (signedRes.ok && signedRes.body) {
               await new Promise((resolve, reject) => {
                 const stream = fs.createWriteStream(filePath);
                 signedRes.body.pipe(stream);
-                signedRes.body.on('error', reject);
-                stream.on('finish', resolve);
+                signedRes.body.on("error", reject);
+                stream.on("finish", resolve);
               });
               console.log(`✅ Saved (fetched signedUrl): ${label}`);
               fileCount++;
@@ -167,7 +184,9 @@ async function downloadFilesFromTable(tableName, fileColumns, concurrency = 5) {
           }
         }
       } catch (err) {
-        console.warn(`⚠️ REST signedUrl fetch failed for ${label}: ${err.message}`);
+        console.warn(
+          `⚠️ REST signedUrl fetch failed for ${label}: ${err.message}`
+        );
       }
     }
 
@@ -177,7 +196,9 @@ async function downloadFilesFromTable(tableName, fileColumns, concurrency = 5) {
   }
 
   // Pagination loop
-  let page = await table.select(columns).getPaginated({ pagination: { size: 20 }, consistency: 'eventual' });
+  let page = await table
+    .select(columns)
+    .getPaginated({ pagination: { size: 20 }, consistency: "eventual" });
 
   while (page && page.records.length > 0) {
     console.log(`📄 Processing ${page.records.length} records...`);
@@ -188,7 +209,9 @@ async function downloadFilesFromTable(tableName, fileColumns, concurrency = 5) {
         if (!value) continue;
         const files = Array.isArray(value) ? value : [value];
 
-        const tasks = files.map((file) => limit(() => downloadFile(file, record.id, col)));
+        const tasks = files.map((file) =>
+          limit(() => downloadFile(file, record.xata_id, col))
+        );
         await Promise.all(tasks);
       }
     }
@@ -212,7 +235,7 @@ async function main() {
     const tablesWithFiles = await getAllTablesWithFiles();
 
     if (Object.keys(tablesWithFiles).length === 0) {
-      console.log('ℹ️ No tables with file columns found. Exiting.');
+      console.log("ℹ️ No tables with file columns found. Exiting.");
       return;
     }
 
@@ -224,9 +247,9 @@ async function main() {
       }
     }
 
-    console.log('\n✅ All downloads complete.');
+    console.log("\n✅ All downloads complete.");
   } catch (err) {
-    console.error('❌ Fatal error:', err.message);
+    console.error("❌ Fatal error:", err.message);
   }
 }
 
